@@ -22,6 +22,7 @@ var (
 	MY_PATH    = ""
 	SEED       = time.Now().UnixNano()
 	files, err = ioutil.ReadDir(ROOT)
+	SET        = make(map[int]bool)
 )
 
 type Samples struct {
@@ -48,13 +49,16 @@ func (p *Pull) genPull(obj []Samples, cnt int) {
 }
 
 func (s *Samples) genSample() {
-
 	for len(s.sample) < LEN {
 		temp := rand.Intn((MAX - MIN) + MIN)
-		if contains(s.sample, temp) {
+		if _, ok := SET[temp]; ok {
 			continue
 		}
+		// if contains(s.sample, temp) {
+		// 	continue
+		// }
 		s.sample = append(s.sample, temp)
+		SET[temp] = true
 	}
 }
 
@@ -82,29 +86,32 @@ func copyPull(pull []Pull) {
 		}
 	}
 }
+
 func main() {
 	rand.Seed(SEED)
-
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	obj := make([]Samples, 0)
 	pul := make([]Pull, 0)
 	var cnt int
 
 	for _, f := range files {
-		t := Samples{}
-		t.genSample()
-		obj = append(obj, t)
 		if f.IsDir() && f.Name() != ".git" {
+			// if cnt < 3 {
+			t := Samples{}
+			t.genSample()
+			obj = append(obj, t)
+			// }
 			MY_PATH = filepath.Join(ROOT, f.Name())
 			p := Pull{}
 			p.genPull(obj, cnt)
 			pul = append(pul, p)
+			cnt++
 		}
-		cnt++
-	}
-	copyPull(pul)
-	// fmt.Println(pul)
 
+	}
+	fmt.Println(obj)
+	copyPull(pul)
 }
